@@ -274,7 +274,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    ja = TjmgAutomation(args.download_folder, headless=False)
+    ja = TjmgAutomation(args.download_folder, headless=True)
     search_words = []
 
     if args.download_folder:
