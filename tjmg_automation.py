@@ -97,11 +97,20 @@ class TjmgAutomation(object):
             )
             return None
 
-        captcha_pass = False
-        for i in range(3):
-            if self.resolve_captcha() is True:
-                captcha_pass = True
-                break
+        try:
+            captcha_pass = False
+            for i in range(3):
+                if self.resolve_captcha() is True:
+                    captcha_pass = True
+                    break
+        except UnexpectedAlertPresentException:
+            logging.warning(
+                '{} - Download do arquivo não permitido'.format(
+                    number
+                )
+            )
+
+            return None
 
         if not captcha_pass:
             logging.warning(
@@ -114,7 +123,7 @@ class TjmgAutomation(object):
         try:
             self.driver.find_elements_by_xpath("//*[contains(text(), ' Andamentos')]")[0].click()
 
-        except NoSuchElementException:
+        except:
             logging.warning(
                 '{} - Element not found.'.format(
                     number
@@ -265,7 +274,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    ja = TjmgAutomation(args.download_folder, headless=True)
+    ja = TjmgAutomation(args.download_folder, headless=False)
     search_words = []
 
     if args.download_folder:
