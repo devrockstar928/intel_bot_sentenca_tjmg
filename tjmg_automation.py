@@ -125,7 +125,7 @@ class TjmgAutomation(object):
 
         except:
             logging.warning(
-                '{} - Element not found.'.format(
+                '{} - Arquivo não existe.'.format(
                     number
                 )
             )
@@ -138,18 +138,31 @@ class TjmgAutomation(object):
                 for tr in all_tr_items:
                     td_elems = tr.find_elements_by_xpath("td")
                     if word in td_elems[1].text.strip():
-                        download_btn = td_elems[0].find_elements_by_xpath(".//a")[0]
+                        if len(td_elems[0].find_elements_by_xpath(".//a")) > 0:
+                            download_btn = td_elems[0].find_elements_by_xpath(".//a")[0]
+                        else:
+                            continue
                         download_btn.click()
                         doc_id = download_btn.get_attribute("href")
                         doc_id = re.search(r"javascript:mostrarOcultarPanel\((.*)?\)", doc_id).group(1)[1:][:-1]
-                        download_btn = self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")[0]
+                        if len(self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")) > 0:
+                            download_btn = self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")[0]
+                        else:
+                            continue
                         pdf_url_name = download_btn.text
                         download_btn.click()
                         time.sleep(5)
                         self.rename(pdf_url_name, number, td_elems[1].text.strip())
         except NoSuchElementException:
             logging.warning(
-                '{} - Download failed.'.format(
+                '{} - Arquivo não existe.'.format(
+                    number
+                )
+            )
+            return None
+        except IndexError:
+            logging.warning(
+                '{} - Arquivo não existe.'.format(
                     number
                 )
             )
@@ -187,7 +200,7 @@ class TjmgAutomation(object):
                 timeout=15
             )
             if response.ok:
-                time.sleep(15)
+                time.sleep(5)
                 id_message = response.text.split('|')[-1]
                 resolved_captcha = requests.get(
                     '{}?key={}&action=get&id={}'.format(
@@ -215,7 +228,7 @@ class TjmgAutomation(object):
             for row in reader2:
                 # try:
                     self.search_process(
-                        number=row['processo'],
+                        number=row['Processo Nº'],
                         search_word=csv_words,
                         work_folder=work_folder
                     )
