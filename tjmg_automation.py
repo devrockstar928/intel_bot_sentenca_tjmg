@@ -188,12 +188,13 @@ class TjmgAutomation(object):
                     )
             if not all_files_downloaded:
                 return None
-        except:
+        except Exception as e:
             logging.warning(
                 '{} - Arquivo não existe.'.format(
                     number
                 )
             )
+            print(str(e))
             if all_files_downloaded:
                 return True
             return None
