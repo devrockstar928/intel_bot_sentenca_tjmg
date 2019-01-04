@@ -144,8 +144,9 @@ class TjmgAutomation(object):
 
         all_tr_items = self.driver.find_elements_by_xpath("//table[@class='corpo']/tbody/tr[contains(@class, 'linha')]")
         record_number = len(all_tr_items)
+
+        all_files_downloaded = False
         try:
-            all_files_downloaded = False
             for word in search_word:
                 file_downloaded = False
                 for i in range(0, record_number):
@@ -193,6 +194,8 @@ class TjmgAutomation(object):
                     number
                 )
             )
+            if all_files_downloaded:
+                return True
             return None
 
         return True
