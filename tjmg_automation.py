@@ -9,9 +9,11 @@ import sys
 import os
 import logging
 import re
-
+from pathlib import Path
 import requests
 import pdfkit
+import urllib.request
+from urllib.request import Request, urlopen
 from selenium import webdriver
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -27,6 +29,8 @@ URL_GET_CAPTCHA = 'http://2captcha.com/res.php'
 KEY = 'c3b78102059c7d2009ea1591019068c6'
 COUNT_NUMBERS = 0
 CURRENT_NUMBERS = 0
+FAILURES = 0
+SUCCESS = 0
 logging.basicConfig(
     filename='scanning.log',
     filemode='w',
@@ -69,8 +73,9 @@ class TjmgAutomation(object):
         return self.driver
 
     def rename(self, file_name, number, word):
-        os.rename(self.download_folder + '/' + file_name,
-                  self.download_folder + '/' + number + '_' + word + '.pdf')
+        ext = Path(file_name).suffix
+        os.rename(self.download_folder + file_name,
+                  self.download_folder + number + '_' + word + ext)
 
     def search_process(self, number, search_word=None, work_folder='./'):
         try:
@@ -91,10 +96,17 @@ class TjmgAutomation(object):
                                                "//button[@type='submit']")[0].click()
         except NoSuchElementException:
             logging.warning(
-                '{} - Element not found.'.format(
+                '{} - Webdriver Element not found.'.format(
                     number
                 )
             )
+            return None
+        except TimeoutException:
+            logging.warning(
+                    '{} - Timeout in loading website'.format(
+                        number
+                    )
+                )
             return None
 
         try:
@@ -122,7 +134,6 @@ class TjmgAutomation(object):
 
         try:
             self.driver.find_elements_by_xpath("//*[contains(text(), ' Andamentos')]")[0].click()
-
         except:
             logging.warning(
                 '{} - Arquivo não existe.'.format(
@@ -132,12 +143,15 @@ class TjmgAutomation(object):
             return None
 
         all_tr_items = self.driver.find_elements_by_xpath("//table[@class='corpo']/tbody/tr[contains(@class, 'linha')]")
-
+        record_number = len(all_tr_items)
         try:
+            all_files_downloaded = False
             for word in search_word:
-                for tr in all_tr_items:
-                    td_elems = tr.find_elements_by_xpath("td")
-                    if word in td_elems[1].text.strip():
+                file_downloaded = False
+                for i in range(0, record_number):
+                    td_elems = self.driver.find_elements_by_xpath("//table[@class='corpo']/tbody/tr[contains(@class, 'linha')]")[i].find_elements_by_xpath("td")
+                    item_name = td_elems[1].text.strip()
+                    if word in item_name:
                         if len(td_elems[0].find_elements_by_xpath(".//a")) > 0:
                             download_btn = td_elems[0].find_elements_by_xpath(".//a")[0]
                         else:
@@ -149,18 +163,31 @@ class TjmgAutomation(object):
                             download_btn = self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")[0]
                         else:
                             continue
-                        pdf_url_name = download_btn.text
+                        file_name = download_btn.text
                         download_btn.click()
-                        time.sleep(5)
-                        self.rename(pdf_url_name, number, td_elems[1].text.strip())
-        except NoSuchElementException:
-            logging.warning(
-                '{} - Arquivo não existe.'.format(
-                    number
-                )
-            )
-            return None
-        except IndexError:
+                        time.sleep(3)
+                        my_file = Path(self.download_folder + file_name)
+                        if my_file.is_file():
+                            self.rename(file_name, number, item_name)
+                        else:
+                            self.driver.get(download_btn.get_attribute('href'))
+                            webpage = self.driver.page_source
+                            self.generate_pdf(content=webpage, name_file=file_name, work_folder=work_folder)
+                            self.driver.execute_script("window.history.go(-1)")
+                            time.sleep(1)
+                            self.rename(file_name + '.pdf', number, item_name)
+                        file_downloaded = True
+                        all_files_downloaded = True
+                if not file_downloaded:
+                    logging.warning(
+                        '{} - {} - Arquivo não existe.'.format(
+                            number,
+                            word
+                        )
+                    )
+            if not all_files_downloaded:
+                return None
+        except:
             logging.warning(
                 '{} - Arquivo não existe.'.format(
                     number
@@ -216,6 +243,26 @@ class TjmgAutomation(object):
         except:
             return False
 
+    def generate_pdf(self, content, name_file, work_folder):
+        html = '''
+            <!DOCTYPE HTML>
+            <html>
+                <head>
+                    <meta charset="utf-8">
+                </head>
+                <body>
+                    {content}
+                </body>
+            </html>
+            '''.format(content=content)
+        options = {
+            'quiet': ''
+        }
+        pdfkit.from_string(
+            input=html,
+            output_path='{}{}.pdf'.format(work_folder, name_file),
+            options=options)
+
     def csv_parsing(self, csv_file, csv_words, work_folder='./'):
         global COUNT_NUMBERS
 
@@ -227,13 +274,13 @@ class TjmgAutomation(object):
             reader2 = csv.DictReader(f2)
             for row in reader2:
                 # try:
-                    self.search_process(
+                    result = self.search_process(
                         number=row['Processo Nº'],
                         search_word=csv_words,
                         work_folder=work_folder
                     )
 
-                    self.progress_bar()
+                    self.progress_bar(result)
                 # except Exception as e:
                 #     pass
                     # logging.warning(
@@ -243,15 +290,22 @@ class TjmgAutomation(object):
                     # )
 
     @staticmethod
-    def progress_bar():
+    def progress_bar(result):
         global COUNT_NUMBERS
         global CURRENT_NUMBERS
-
+        global FAILURES
+        global SUCCESS
         CURRENT_NUMBERS += 1
+        if result is None:
+            FAILURES += 1
+        else:
+            SUCCESS += 1
         sys.stdout.write("\r" + str(
-            'Progress Downloading Numbers: {}/{}'.format(
+            'Progress Downloading Numbers: {}/{} ({} succeeded, {} failed)'.format(
                 CURRENT_NUMBERS,
-                COUNT_NUMBERS
+                COUNT_NUMBERS,
+                SUCCESS,
+                FAILURES
             )
         ))
 
@@ -310,8 +364,8 @@ if __name__ == '__main__':
     elif args.number and args.csv_words:
         COUNT_NUMBERS = len(args.number)
         for num in args.number:
-            ja.search_process(num, search_words, args.download_folder)
-            ja.progress_bar()
+            result = ja.search_process(num, search_words, args.download_folder)
+            ja.progress_bar(result)
 
     if args.download_folder:
         sys.stdout.write(

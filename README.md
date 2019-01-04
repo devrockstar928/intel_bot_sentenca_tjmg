@@ -3,6 +3,9 @@
 ## Installation
 Use python3.6
 
+sudo apt-get install wkhtmltopdf
+pip install -r requirements.txt
+
 ## Run script via terminal
 -number - list of search numbers
 
@@ -22,7 +25,7 @@ python3 tjmg_automation.py -csv_numbers number.csv -csv_words words.csv -downloa
 
 #### With number list
 ```
-python3 tjmg_automation.py -number 2008.001.184665-8 0156353-61.2014.8.19.0038 -csv_words words.csv -download_folder ./files2/
+python3 tjmg_automation.py -number 2008.001.184665-8 0156353-61.2014.8.19.0038 -csv_words words.csv -download_folder ./files/
 ```
 1. Read numbers from the command line number split by space num1 num2 num3
 2. Read numbers from the words.csv
