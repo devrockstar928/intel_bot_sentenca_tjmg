@@ -194,7 +194,6 @@ class TjmgAutomation(object):
                     number
                 )
             )
-            print(str(e))
             if all_files_downloaded:
                 return True
             return None

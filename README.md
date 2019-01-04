@@ -15,6 +15,12 @@ pip install -r requirements.txt
 
 -download_folder - a place, where download pdf files if the folder doesn't exists will be created new if parameter not set, will save in a current folder
 
+## IMPORTANTLY Run one time in terminal session
+```
+export DISPLAY=:20
+Xvfb :20 -screen 0 1366x768x16 &
+```
+
 #### With csv file
 ```
 python3 tjmg_automation.py -csv_numbers number.csv -csv_words words.csv -download_folder ./files/
