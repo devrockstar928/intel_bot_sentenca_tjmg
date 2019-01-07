@@ -156,13 +156,15 @@ class TjmgAutomation(object):
                     item_name = td_elems[1].text.strip()
                 except:
                     continue
-                print(word)
-                print(item_name)
                 if word in item_name:
+                    print(number)
+                    print(word)
+                    print(item_name)
                     try:
                         if len(td_elems[0].find_elements_by_xpath(".//a")) > 0:
                             download_btn = td_elems[0].find_elements_by_xpath(".//a")[0]
                         else:
+                            print('step1 error')
                             continue
                         download_btn.click()
                         doc_id = download_btn.get_attribute("href")
@@ -170,11 +172,13 @@ class TjmgAutomation(object):
                         if len(self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")) > 0:
                             download_btn = self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")[0]
                         else:
+                            print('step2 error')
                             continue
                         file_name = download_btn.text
                         download_btn.click()
                         time.sleep(2)
                     except:
+                        print('step3 error')
                         continue
                     try:
                         my_file = Path(self.download_folder + file_name)
@@ -188,6 +192,7 @@ class TjmgAutomation(object):
                             time.sleep(1)
                             self.rename(file_name + '.pdf', number, item_name)
                     except:
+                        print('step4 error')
                         continue
                     file_downloaded = True
                     all_files_downloaded = True
