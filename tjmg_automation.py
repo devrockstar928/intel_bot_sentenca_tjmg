@@ -156,6 +156,8 @@ class TjmgAutomation(object):
                     item_name = td_elems[1].text.strip()
                 except:
                     continue
+                print(word)
+                print(item_name)
                 if word in item_name:
                     try:
                         if len(td_elems[0].find_elements_by_xpath(".//a")) > 0:
