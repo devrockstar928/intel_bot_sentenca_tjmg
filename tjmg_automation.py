@@ -94,7 +94,7 @@ class TjmgAutomation(object):
             self.driver.find_elements_by_xpath("//section[@class='tabs-of-process']"
                                                "//form[@class='first-instance-form']"
                                                "//button[@type='submit']")[0].click()
-            time.sleep(2)
+            time.sleep(3)
         except NoSuchElementException:
             logging.warning(
                 '{} - Webdriver Element not found.'.format(
