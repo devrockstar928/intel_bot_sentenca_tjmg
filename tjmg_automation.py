@@ -191,7 +191,7 @@ class TjmgAutomation(object):
                         try:
                             self.generate_pdf(content=webpage, name_file=file_name, work_folder=work_folder)
                         except Exception as e:
-                            print('step5 error' + str(e))
+                            print(str(e))
                             continue
                         self.driver.execute_script("window.history.go(-1)")
                         time.sleep(1)
