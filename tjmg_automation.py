@@ -190,15 +190,16 @@ class TjmgAutomation(object):
                             print('step4 error')
                             continue
                     else:
+                        self.driver.get(download_btn.get_attribute('href'))
+                        webpage = self.driver.page_source
                         try:
-                            self.driver.get(download_btn.get_attribute('href'))
-                            webpage = self.driver.page_source
                             self.generate_pdf(content=webpage, name_file=file_name, work_folder=work_folder)
-                            self.driver.execute_script("window.history.go(-1)")
-                            time.sleep(1)
                         except:
                             print('step5 error')
                             continue
+                        self.driver.execute_script("window.history.go(-1)")
+                        time.sleep(1)
+
                         try:
                             self.rename(file_name + '.pdf', number, item_name)
                         except:
