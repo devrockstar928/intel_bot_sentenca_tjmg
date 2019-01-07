@@ -174,11 +174,6 @@ class TjmgAutomation(object):
                         time.sleep(2)
                     except:
                         continue
-
-                    print(number)
-                    print(word)
-                    print(item_name)
-
                     my_file = Path(self.download_folder + file_name)
                     if my_file.is_file():
                         try:
