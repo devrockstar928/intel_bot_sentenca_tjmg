@@ -157,9 +157,6 @@ class TjmgAutomation(object):
                 except:
                     continue
                 if word in item_name:
-                    print(number)
-                    print(word)
-                    print(item_name)
                     try:
                         if len(td_elems[0].find_elements_by_xpath(".//a")) > 0:
                             download_btn = td_elems[0].find_elements_by_xpath(".//a")[0]
@@ -180,20 +177,34 @@ class TjmgAutomation(object):
                     except:
                         print('step3 error')
                         continue
-                    try:
-                        my_file = Path(self.download_folder + file_name)
-                        if my_file.is_file():
+
+                    print(number)
+                    print(word)
+                    print(item_name)
+
+                    my_file = Path(self.download_folder + file_name)
+                    if my_file.is_file():
+                        try:
                             self.rename(file_name, number, item_name)
-                        else:
+                        except:
+                            print('step4 error')
+                            continue
+                    else:
+                        try:
                             self.driver.get(download_btn.get_attribute('href'))
                             webpage = self.driver.page_source
                             self.generate_pdf(content=webpage, name_file=file_name, work_folder=work_folder)
                             self.driver.execute_script("window.history.go(-1)")
                             time.sleep(1)
+                        except:
+                            print('step5 error')
+                            continue
+                        try:
                             self.rename(file_name + '.pdf', number, item_name)
-                    except:
-                        print('step4 error')
-                        continue
+                        except:
+                            print('step6 error')
+                            continue
+
                     file_downloaded = True
                     all_files_downloaded = True
             if not file_downloaded:
