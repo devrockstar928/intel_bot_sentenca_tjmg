@@ -161,7 +161,6 @@ class TjmgAutomation(object):
                         if len(td_elems[0].find_elements_by_xpath(".//a")) > 0:
                             download_btn = td_elems[0].find_elements_by_xpath(".//a")[0]
                         else:
-                            print('step1 error')
                             continue
                         download_btn.click()
                         doc_id = download_btn.get_attribute("href")
@@ -169,13 +168,11 @@ class TjmgAutomation(object):
                         if len(self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")) > 0:
                             download_btn = self.driver.find_elements_by_xpath("//table[@id='painelMov" + doc_id + "']//a")[0]
                         else:
-                            print('step2 error')
                             continue
                         file_name = download_btn.text
                         download_btn.click()
                         time.sleep(2)
                     except:
-                        print('step3 error')
                         continue
 
                     print(number)
@@ -187,15 +184,14 @@ class TjmgAutomation(object):
                         try:
                             self.rename(file_name, number, item_name)
                         except:
-                            print('step4 error')
                             continue
                     else:
                         self.driver.get(download_btn.get_attribute('href'))
                         webpage = self.driver.page_source
                         try:
                             self.generate_pdf(content=webpage, name_file=file_name, work_folder=work_folder)
-                        except:
-                            print('step5 error')
+                        except Exception as e:
+                            print('step5 error' + str(e))
                             continue
                         self.driver.execute_script("window.history.go(-1)")
                         time.sleep(1)
@@ -203,7 +199,6 @@ class TjmgAutomation(object):
                         try:
                             self.rename(file_name + '.pdf', number, item_name)
                         except:
-                            print('step6 error')
                             continue
 
                     file_downloaded = True
