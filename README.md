@@ -1,14 +1,36 @@
 # portal tjmg automation
 
 ## Installation
-Use python3.6
 
+#### Dependencies
+* Python 3.x
+
+#### Prerequisites
+```bash
+   sudo apt-get install wkhtmltopdf
+   sudo apt install -y python3-pip
+   sudo apt install build-essential libssl-dev libffi-dev python3-dev
+   sudo apt install -y python3-venv
 ```
-sudo apt-get install wkhtmltopdf
+
+#### Create virtualenv
+```
+cd /home/{USERNAME}/
+python3 -m venv {virtualenv directory}
+source {virtualenv directory}/bin/activate
+git clone https://github.com/devrockstar928/intel_bot_sentenca_tjmg.git
+cd intel_bot_sentenca_tjmg
 pip install -r requirements.txt
 ```
 
 ## Run script via terminal
+
+#### Activate virtualenv and go to project root directory
+```
+source {virtualenv directory}/bin/activate (for example, source /home/ubuntu/env/bin/activate)
+cd {project_root_directory}
+```
+
 -number - list of search numbers
 
 -csv_numbers - csv file with numbers
