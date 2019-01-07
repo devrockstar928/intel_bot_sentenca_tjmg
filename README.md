@@ -3,8 +3,10 @@
 ## Installation
 Use python3.6
 
+```
 sudo apt-get install wkhtmltopdf
 pip install -r requirements.txt
+```
 
 ## Run script via terminal
 -number - list of search numbers
