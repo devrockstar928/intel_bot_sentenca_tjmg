@@ -126,7 +126,7 @@ class TjmgAutomation(object):
 
         if not captcha_pass:
             logging.warning(
-                '{} - Captcha failed.'.format(
+                '{} - Captcha pass failed.'.format(
                     number
                 )
             )
