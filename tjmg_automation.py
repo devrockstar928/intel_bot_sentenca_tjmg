@@ -181,15 +181,17 @@ class TjmgAutomation(object):
                         except:
                             continue
                     else:
-                        self.driver.get(download_btn.get_attribute('href'))
+                        try:
+                            self.driver.get(download_btn.get_attribute('href'))
+                        except:
+                            continue
                         webpage = self.driver.page_source
                         try:
                             self.generate_pdf(content=webpage, name_file=file_name, work_folder=work_folder)
                         except Exception as e:
-                            print(str(e))
                             continue
                         self.driver.execute_script("window.history.go(-1)")
-                        time.sleep(1)
+                        time.sleep(2)
 
                         try:
                             self.rename(file_name + '.pdf', number, item_name)
