@@ -1,4 +1,4 @@
-# portal tjmg automation
+# tjmg automation
 
 ## Installation
 
