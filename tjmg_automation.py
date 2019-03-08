@@ -12,9 +12,10 @@ import re
 from pathlib import Path
 import requests
 import pdfkit
-import urllib.request
-from urllib.request import Request, urlopen
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
     NoSuchElementException,
     UnexpectedAlertPresentException
@@ -38,46 +39,64 @@ logging.basicConfig(
 )
 
 if platform.system() == "Windows":
-    CHROME_DRIVER_PATH = os.path.join(BASE_DIR, "chrome", "windows", "chromedriver.exe")
+    FIREFOX_DRIVER_PATH = os.path.join(BASE_DIR, "firefox", "windows", "geckodriver.exe")
 elif platform.system() == "Linux":
-    CHROME_DRIVER_PATH = os.path.join(BASE_DIR, "chrome", "linux", "chromedriver")
+    FIREFOX_DRIVER_PATH = os.path.join(BASE_DIR, "firefox", "linux", "geckodriver")
 else:
-    CHROME_DRIVER_PATH = os.path.join(BASE_DIR, "chrome", "mac", "chromedriver")
+    FIREFOX_DRIVER_PATH = os.path.join(BASE_DIR, "firefox", "mac", "geckodriver")
 
 
 class TjmgAutomation(object):
+
     def __init__(self, download_folder, headless=False):
+        self.download_folder = os.path.join(BASE_DIR, download_folder)
+        if not os.path.exists(self.download_folder):
+            os.makedirs(self.download_folder)
         self.headless = headless
         self.driver = self.session()
-        self.download_folder = download_folder
-        self.enable_download_in_headless_chrome()
-
-    def enable_download_in_headless_chrome(self):
-        # add missing support for chrome "send_command"  to selenium webdriver
-        self.driver.command_executor._commands["send_command"] = ("POST", '/session/$sessionId/chromium/send_command')
-
-        params = {'cmd': 'Page.setDownloadBehavior', 'params': {'behavior': 'allow', 'downloadPath': self.download_folder}}
-        command_result = self.driver.execute("send_command", params)
 
     def session(self):
-        chrome_options = webdriver.ChromeOptions()
+        options = webdriver.FirefoxOptions()
         if self.headless is True:
-            chrome_options.add_argument('-headless')
-        # PROXY = "142.93.87.88:3128"
-        # chrome_options.add_argument('--proxy-server=%s' % PROXY)
-        self.driver = webdriver.Chrome(CHROME_DRIVER_PATH, chrome_options=chrome_options)
+            options.add_argument('-headless')
 
-        self.driver.set_page_load_timeout(50)
+        profile = webdriver.FirefoxProfile()
+        profile.set_preference("dom.webnotifications.enabled", False)
+        profile.set_preference("browser.download.folderList", 2)
+        profile.set_preference("browser.download.dir", self.download_folder)
+        profile.set_preference("browser.download.manager.alertOnEXEOpen", False)
+        profile.set_preference("browser.helperApps.neverAsk.saveToDisk",
+                              "application/msword, application/csv, "
+                              "application/ris, text/csv, image/png, application/pdf, "
+                              "text/html, text/plain, application/zip, application/x-zip, "
+                              "application/x-zip-compressed, application/download, application/octet-stream")
+        profile.set_preference("browser.download.manager.showWhenStarting", False)
+        profile.set_preference("browser.download.manager.focusWhenStarting", False)
+        profile.set_preference("browser.helperApps.alwaysAsk.force", False)
+        profile.set_preference("browser.download.manager.alertOnEXEOpen", False)
+        profile.set_preference("browser.download.manager.closeWhenDone", True)
+        profile.set_preference("browser.download.manager.showAlertOnComplete", False)
+        profile.set_preference("browser.download.manager.useWindow", False)
+        profile.set_preference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", False)
+        profile.set_preference("pdfjs.disabled", True)
+
+        self.driver = webdriver.Firefox(
+            service_log_path='/dev/null',
+            options=options,
+            firefox_profile=profile,
+            executable_path=FIREFOX_DRIVER_PATH
+        )
+        self.driver.set_page_load_timeout(30)
         self.driver.set_window_size(1360, 900)
 
         return self.driver
 
     def rename(self, file_name, number, word):
         ext = Path(file_name).suffix
-        os.rename(self.download_folder + file_name,
-                  self.download_folder + number + '_' + word + ext)
+        os.rename(self.download_folder + '/' + file_name,
+                  self.download_folder + '/' + number + '_' + word + ext)
 
-    def search_process(self, number, search_word=None, work_folder='./'):
+    def search_process(self, number, search_word=None, work_folder=''):
         try:
             self.driver.get(BASE_URL)
         except TimeoutException:
@@ -132,9 +151,10 @@ class TjmgAutomation(object):
                 )
             )
             return None
-        time.sleep(3)
         try:
-            self.driver.find_elements_by_xpath("//*[contains(text(), ' Andamentos')]")[0].click()
+            element = WebDriverWait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.XPATH, "//*[contains(text(), ' Andamentos')]")))
+            element.click()
         except:
             logging.warning(
                 '{} - Arquivo não existe.'.format(
@@ -171,10 +191,10 @@ class TjmgAutomation(object):
                             continue
                         file_name = download_btn.text
                         download_btn.click()
-                        time.sleep(2)
+                        time.sleep(3)
                     except:
                         continue
-                    my_file = Path(self.download_folder + file_name)
+                    my_file = Path(self.download_folder + '/' + file_name)
                     if my_file.is_file():
                         try:
                             self.rename(file_name, number, item_name)
@@ -200,6 +220,7 @@ class TjmgAutomation(object):
 
                     file_downloaded = True
                     all_files_downloaded = True
+                    break
             if not file_downloaded:
                 logging.warning(
                     '{} - {} - Arquivo não existe.'.format(
@@ -275,10 +296,10 @@ class TjmgAutomation(object):
         }
         pdfkit.from_string(
             input=html,
-            output_path='{}{}.pdf'.format(work_folder, name_file),
+            output_path='{}/{}.pdf'.format(work_folder, name_file),
             options=options)
 
-    def csv_parsing(self, csv_file, csv_words, work_folder='./'):
+    def csv_parsing(self, csv_file, csv_words, work_folder=''):
         global COUNT_NUMBERS
 
         with open(csv_file, newline='') as f1:
@@ -344,7 +365,7 @@ if __name__ == '__main__':
         dest='download_folder',
         type=str,
         help='Folder where will be stored pdf files',
-        default='./'
+        default=''
     )
     parser.add_argument(
         '-number',
@@ -356,7 +377,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    ja = TjmgAutomation(args.download_folder, headless=True)
+    ja = TjmgAutomation(args.download_folder, headless=False)
     search_words = []
 
     if args.download_folder:
